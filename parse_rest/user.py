@@ -84,7 +84,8 @@ class User(ParseResource):
     @classmethod
     def login(cls, username, passwd):
         login_url = '/'.join([API_ROOT, 'login'])
-        return cls(**User.GET(login_url, username=username, password=passwd))
+        revocable_session = {'X-Parse-Revocable-Session': 1}
+        return cls(**User.GET(login_url, username=username, password=passwd, extra_headers=revocable_session))
 
     @classmethod
     def login_auth(cls, auth):
