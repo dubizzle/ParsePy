@@ -126,7 +126,7 @@ class EmbeddedObject(ParseType):
         return klass(**kw)
 
 
-@complex_type()
+@complex_type('Relation')
 class Relation(ParseType):
     @classmethod
     def from_native(cls, **kw):
@@ -178,10 +178,9 @@ class Relation(ParseType):
         return repr
 
     def _to_native(self):
-        return {
-            '__type': 'Relation',
-            'className': self.relatedClassName
-        }
+        # Saving relations is a separate operation and thus should never need
+        # to convert this field _to_native
+        return None
 
     def add(self, objs):
         """Adds a Parse.Object or an array of Parse.Objects to the relation."""
@@ -338,7 +337,7 @@ class File(ParseType, ParseBase):
             return response, lambda response_dict: None
 
     def delete(self, batch=False):
-        uri = "/".join(self.__class__.ENDPOINT_ROOT, self.name)
+        uri = "/".join([self.__class__.ENDPOINT_ROOT, self.name])
         response = self.__class__.DELETE(uri, batch=batch)
 
         if batch:
@@ -440,10 +439,11 @@ class ParseResource(ParseBase):
 
     def _init_attrs(self, args):
         for key, value in six.iteritems(args):
+            # https://github.com/milesrichardson/ParsePy/issues/155
             try:
                 setattr(self, key, ParseType.convert_from_parse(key, value))
-            except AttributeError as e:
-                print "Can't set attribute {}".format(key)
+            except AttributeError:
+                continue
 
     def _to_native(self):
         return ParseType.convert_to_parse(self)
